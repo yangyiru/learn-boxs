@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>数组去重</title>
+</head>
+
+<body>
+    <script>
+    // var arr = [1, "1", 2, "2", 2, 1, 1]
+    var arr = [1, 2, 3, 4, 'a', 'b', 1, 3, 4, 56, 32, 34, 2, 'b', 'c', 5, '1', '2'];
+    // 方法一 兼容性好的原始方法去重
+    // function unique(array) {
+    //     var res = [];
+    //     for (var i = 0; i < array.length; i++) {
+    //         for (var k = 0; k < res.length; k++) {
+    //             if (array[i] === res[k]) {
+    //                 break
+    //             }
+    //         }
+    //         console.log(k, res.length)
+    //         if (k === res.length) {
+    //           res.push(array[i])
+    //         }
+    //     }
+    //     return res;
+    // }
+    // 
+    // 方法二 使用indexOf优化原始方法内部循环
+    // function unique(array) {
+    //     var res = [];
+    //     for (var i = 0; i < array.length; i++) {
+    //         var current = arr[i]
+    //         if (res.indexOf(current) === -1) {
+    //             res.push(arr[i])
+    //         }
+    //     }
+    //     return res
+    // }
+    // 
+    // 方法三 使用sort后去重
+    // function unique(array) {
+    //   var res = [];
+    //   var sortArray = array.sort();
+    //   var seen;
+    //   console.log(sortArray)
+    //   for (var i = 0; i < sortArray.length; i++) {
+    //   	if(sortArray[i] !== res[res.length - 1]) {
+    //       res.push(sortArray[i])
+    //   	}
+    //   }
+    //   return res
+    // }
+    // 方法四 使用Object键值对去重
+    // function unique(array) {
+    //     var res = [];
+    //     var object = {};
+    //     for (var i = 0; i < array.length; i++) {
+    //         console.log(object[typeof(array[i]) + array[i]])
+    //         console.log(object[typeof(array[i])])
+    //         if (!object[typeof(array[i]) + array[i]]) {
+    //             res.push(array[i])
+    //             object[typeof(array[i]) + array[i]] = 1
+    //         }
+    //     }
+    //     return res
+    // }
+    
+    console.log(unique(arr))
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>类型判断</title>
+	</head>
+
+	<body>
+		<script>
+			var classType = {}
+			// 生成classType映射
+				'Boolean Number String Function Array Date RegExp Object Error Null Undefined'.split(' ').map(function(item) {
+					classType['[object ' + item + ']'] = item.toLowerCase()
+				})
+			/**
+			 * 第一版 type api封装
+			 */
+			//       function type(obj) {
+			//         return typeof obj === 'object' || typeof obj === 'function' ? classType[Object.prototype.toString.call(obj)] || 'object' : typeof obj 
+			//       }
+			/**
+			 * 第二版 兼容null和undefined在IE6上面的运行结果
+			 */
+			function type(obj) {
+				if(obj === null) {
+					return obj + "";
+				}
+				return typeof obj === 'object' || typeof obj === 'function' ? classType[Object.prototype.toString.call(obj)] || 'object' : typeof obj
+			}
+			console.log(Object.prototype.toString.call(new Date()))
+			console.log(type(new Date())) // 
+			// 判断函数
+		  function isfunction(obj) {
+				return type(obj) === 'function'
+			}
+			console.log(isfunction(new Date())) // false
+			
+			// 判断数组
+		  var isArray = Array.isArray || function (obj) {
+			  return type(obj) === 'array'
+			}
+			console.log(isArray)
+		</script>
+	</body>
+
+</html>
