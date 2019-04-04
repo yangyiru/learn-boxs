@@ -112,4 +112,140 @@
   这里总共有3个命令，作用都是构建Vue.js，后面2条是在第一条命令的基础上，添加一些环境参数。
   当执行 `npm run build` 的时候，实际上就会执行 `node scripts/build.js`，接下来看它是怎么构建的。
   ### 构建过程
-  我们对于构建过程分析是基于源码，先打开构建入口Js文件
+  我们对于构建过程分析是基于源码，先打开构建入口Js文件，在`node scripts/build.js`中：
+  ```
+   let builds = require('./config').getAllBuilds()
+   
+   // filter builds via command line arg
+   
+   if (process.argv[2]) {
+     const filters = process.argv[2].split(',')
+     builds = builds.filter(b => {
+       return filters.some(f => b.output.file.indexOf(f) > -1 || b._name.indexOf(f) > -1)
+     })
+   } else {
+     // filter out weex builds by default
+     builds = builds.filter(b => {
+       return b.output.file.indexOf('weex') === -1
+     })
+   }
+   build(builds)
+  ```
+  这段代码逻辑非常简单，先从配置文件中读取配置，在通过命令行参数对构建配置做过滤，这样就可以构建出不同用途的Vue.js。而配置文件`script/config.js`中：
+  ```
+  const builds = {
+  // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
+  'web-runtime-cjs-dev': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.common.dev.js'),
+    format: 'cjs',
+    env: 'development',
+    banner
+  },
+  'web-runtime-cjs-prod': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.common.prod.js'),
+    format: 'cjs',
+    env: 'production',
+    banner
+  },
+  // Runtime+compiler CommonJS build (CommonJS)
+  'web-full-cjs-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.common.dev.js'),
+    format: 'cjs',
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  'web-full-cjs-prod': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.common.prod.js'),
+    format: 'cjs',
+    env: 'production',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // Runtime only ES modules build (for bundlers)
+  'web-runtime-esm': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.esm.js'),
+    format: 'es',
+    banner
+  },
+  // Runtime+compiler ES modules build (for bundlers)
+  'web-full-esm': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.esm.js'),
+    format: 'es',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // Runtime+compiler ES modules build (for direct import in browser)
+  'web-full-esm-browser-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.esm.browser.js'),
+    format: 'es',
+    transpile: false,
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // Runtime+compiler ES modules build (for direct import in browser)
+  'web-full-esm-browser-prod': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.esm.browser.min.js'),
+    format: 'es',
+    transpile: false,
+    env: 'production',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // runtime-only build (Browser)
+  'web-runtime-dev': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.js'),
+    format: 'umd',
+    env: 'development',
+    banner
+  },
+  // runtime-only production build (Browser)
+  'web-runtime-prod': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.min.js'),
+    format: 'umd',
+    env: 'production',
+    banner
+  },
+  // Runtime+compiler development build (Browser)
+  'web-full-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.js'),
+    format: 'umd',
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // Runtime+compiler production build  (Browser)
+  'web-full-prod': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.min.js'),
+    format: 'umd',
+    env: 'production',
+    alias: { he: './entity-decoder' },
+    banner
+  }
+  // ....
+  }
+}
+  ```
+  这里列举了一些Vue.js构建配置，还有一些关于服务端渲染webpack插件以及weex的打包配置就不列举，可以查看`script/config.js`
+  对于单个配置，它是遵循Rollup的构建规则。其代表意义：
+  * `entry`		构建的入口JS文件地址
+  * `dest`		构建后的JS文件地址
+  * `format` 	构建格式  
+				cjs：表示构建出来的文件遵循CommonJS规范
+				es 表示构建出来的文件遵循 ES Module 规范
+				umd 表示构建出来的文件遵循UMD规范
+  * `env`		构建环境
+  * `alias`		
