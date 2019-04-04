@@ -1,0 +1,115 @@
+## 准备工作
+###【认识Flow】
+  Flow是Facebook出品的JavaScript静态类型检测器。Vue的源码利用了静态类型检查，了解Flow有利于我们阅读Vue源码。
+### 【为什么要用Flow】
+  JavaScript是动态类型语言，其灵活性有目共睹，但过于的灵活导致容易写出非常隐蔽的隐患代码，增加了运行阶段出现的各种奇怪的bug，以及其调试时间。
+  所谓类型检测就是在编译初期尽早发现（由类型错误引起的）bug，又不影响代码运行，使其编写JavaScript具有和编写Java等强类型语言相近的体验。
+  项目越复杂就越需要通过工具的手段来保证项目的维护性和增强代码的可读性。 Vue.js 在做 2.0 重构的时候，在 ES2015 的基础上，除了 ESLint 保证代码风格之外，也引入了 Flow 做静态类型检查。之所以选择 Flow，主要是因为 Babel 和 ESLint 都有对应的 Flow 插件以支持语法，可以完全沿用现有的构建配置，非常小成本的改动就可以拥有静态类型检查的能力。
+### 【Flow的工作方式】
+  * 类型推断：通过变量的使用通过上下文来推断变量的类型，然后根据这些推断来检测这些类型；
+  * 类型注释：事先注释好我们期待的类型，Flow会根据这个注释来检测改类型。
+  **类型推断**
+  它不需要任何代码修改即可进行类型检查，最小化开发的工作量。它不会强制你改变开发习惯，因为它自己会自动推断出变量的类型。即是类型推断：
+  e.g.
+  ```
+  // 案例一
+  /*@flow*/
+  var str = "hello world"
+  console.log(str)
+  
+  // 案例二
+  function split(str) {
+    return str.split(' ')
+  }  
+  split(152)
+  ```
+  Flow在检查上述案例一的代码后不会报错，提示No errors! 而在案例二中则会报错，因为函数split期待的参数是字符串，而我们输入了数字
+  **类型注释**
+  如上所述，类型推断是Flow最有用的特性之一，不需要编写特定的类型注释就能获取有用的反馈。但是在某些特定的场景下，添加注释可以提供更好更明确的检查依据
+  e.g.
+  ```
+  /*@flow*/
+  function add(a, b) {
+	return a + b
+  }
+  add(5 + "world")
+  ```
+  Flow在检查上述代码是没有检出任何错误，因为从语法上讲"+"即可以用在字符串上也可以应在数字上，我们没有明确指出add()的参数必须为数字。
+  这种情况下，我们可以借助类型注释来指明期望的类型。类型注释是以冒号: 开头，可在函数参数、返回值、变量声明中使用。
+  如果我们在上段代码中添加类型注释，就会变成如下：
+  ```
+  /*@flow*/
+  function add(a: number, b: number): number {
+  	return a + b
+  }
+  add(5 + "world")
+  ```
+  现在Flow就能检查出错误，因为函数参数的期待类型是为数字，而我们传入了一个字符串。
+  以上例子针对的是函数类型注释。而Flow能支持的一些常用类型注释：
+  * 数组
+  * 类和对象
+  * Null
+
+### Flow 在 Vue.js 源码中的应用
+  因为有时候我们想引用第三方库或者自定义一些类型，但是Flow并不认识，因此在检查的时候会报错。为了解决这类问题，Flow提出了**libdef**的概念，可以用来失败这些第三方库或者自定义类型，而Vue.js也利用了这一特性。
+  在Vue.js的主目录中有个.flowconfig 文件，他是Flow的配置文件，具体配置可以参考![官方文档](https://flow.org/en/docs/config/#flowconfig-format-)。其中[libs]部分用来描述包含指定库定义目录，默认目录为flow-typed的目录。
+  而vue.js里面的[libs]配置是flow，则表示指定的库定义都在flow文件中。而这个目录结构如下：
+  ```
+  flow
+  ├── compiler.js		# 编译相关
+  ├── component.js		# 组件数据结构
+  ├── global-api.js		# Global API 结构
+  ├── modules.js		# 第三方库定义
+  ├── options.js		# 选项相关
+  ├── ssr.js			# 服务端渲染相关
+  ├── vnode.js			# 虚拟 node 相关
+  ├── weex.js			# weex 相关
+  ```
+  以上可以看出来，Vue.js有很多自定义类型的定义，在阅读源码的时候，如果遇到某个类型并想了解它完整的数据结构的时候，可以回来翻阅这些数据结构的定义。
+  ### 总结
+  通过对Flow的认识，有助于我们阅读Vue的源码，并且这种静态类型的检查方式有利于大型项目的开发与维护。类似Flow的工具还有如TypeScript
+  
+## 了解Vue.js的源码目录设计
+  vue.js的源码都在src目录下，其目录结构如下：
+  ```
+  src
+  ├── compiler		# 编译相关
+  ├── core			# 核心代码
+  ├── platforms		# 不同平台的支持
+  ├── server		# 服务端编译渲染
+  ├── sfc			# .vue文件解析
+  ├── shared		# 共享代码
+  ```
+  ### compiler
+  compiler目录下包含了vue.js所有编译相关的代码。包括把模板解析成AST语法树，AST语法树优化，代码生成等功能。
+  编译工作可以在构建时完成（借助webpack、vue-loader等辅助插件）；也可以在运行时做，使用包含构建功能的Vue.js。但是编译是一件消耗性能的工作，所以更推荐前者——离线编译。
+  ### core
+  core目录包含了Vue.js的核心代码，包括内置组件、全局API封装。vue实例化、观察者、vnode、工具函数等等（**重点**）
+  ### platforms
+  因Vue.js是一个跨平台的MVVM框架，它既能在web上运行又能在weex的配合下运行在native客户端上。platforms是vue.js的入口，2个目录代表2个主要入口，分别打包运行在web上和weex的vue.js。
+  ### server
+  Vue.js2.0支持了服务端渲染，所有的服务端渲染相关的逻辑都在server目录下**注意：这部分代码是跑在服务端的nodejs，不能和跑在浏览器端的vue.js混为一谈**。
+  服务端渲染主要是把组件渲染成服务端的HTML字符串，将他们直接发送到浏览器，最后将静态标记“混合”为客户端上完全交互的应用程序。
+  ### sfc
+  通常我们使用vue.js开发都会借助webpack构建，然后通过.vue单文件编写组件。这个目录下的代码逻辑会吧.vue文件内容解析成一个javascript对象。
+  ### shared
+  vue.js会定义一些工具方法，这里定义的工具方法都会被浏览器端的vue.js和服务端的vue.js所共享。
+  ### 总结
+  单从vue.js的目录设计上来看，作者把功能模块拆分的非常清楚，相关的逻辑放在一个独立的目录下维护。并且把复用的代码也抽成一个独立的目录。这样的目录设计可以让一个项目的可维护度和可阅读性变得很强。
+  
+## Vue.js的源码构建
+  Vue.js的源码是根据![Rollup](https://www.rollupjs.com/guide/zh)构建的，具体了解可参看![官方文档](https://www.rollupjs.com/guide/zh)，而它的构建相关配置都在scripts目录下。
+  ### 构建脚本
+  通常一个基于NPM托管的项目都会有一个package.json文件，它是对项目的描述文件，实际上是一个JSON对象。
+  我们通常会配置script字段作为NPM的执行脚本，Vue.js源码构建如下：
+  ```
+  "scripts": {
+    "build": "node scripts/build.js",
+    "build:ssr": "npm run build -- web-runtime-cjs,web-server-renderer",
+    "build:weex": "npm run build -- weex"
+  },
+  ```
+  这里总共有3个命令，作用都是构建Vue.js，后面2条是在第一条命令的基础上，添加一些环境参数。
+  当执行 `npm run build` 的时候，实际上就会执行 `node scripts/build.js`，接下来看它是怎么构建的。
+  ### 构建过程
+  我们对于构建过程分析是基于源码，先打开构建入口Js文件
