@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>局部变量变为全局对象</title>
+	</head>
+	<body>
+		<script>
+			(function(win) {
+				function Person() {}
+				Person.prototype.mathFloor = function(max, min) {
+					return Math.floor(Math.random() * (max - min) + min)
+				}
+				win.person = Person
+			})(window)
+			var per = new person()
+			console.log(per.mathFloor(10, 20))
+			console.dir(per)
+			console.dir(per.__proto__  === person.prototype)
+		</script>
+	</body>
+</html>

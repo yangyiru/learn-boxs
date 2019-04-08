@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>贪吃蛇之随机小方块</title>
+		<style type="text/css">
+			.map{
+				width: 800px;
+				height: 600px;
+				background: #ccc;
+				position: relative;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="map"></div>
+		<script type="text/javascript">
+			// 产生随机数对象
+			(function(win) {
+				function Random() {};
+				Random.prototype.getRandom = function(min, max) {
+				  return Math.floor(Math.random() * (max - min) + min)
+				};
+				win.Random = Random; // 把GetRandom构造函数暴露出去
+			})(window);
+			var rdom = new Random();
+			
+			// 小方块
+			(function(window) {
+				var map = document.querySelector('.map')
+				// 食物小方块的构造函数,设置颜色,大小
+				function FoodBall(color, width, height) {
+				  this.color = color;
+				  this.width = width || 20;
+				  this.height = height || 20;
+				  this.element = document.createElement('div') // 小方块元素
+				  // 横、纵坐标
+				  this.x = 0;
+				  this.y = 0;
+				}
+				// 初始化 小方块的显示效果与位置 
+				FoodBall.prototype.init = function(map){
+					// 设置小方块样式
+					var div = this.element
+					div.style.position = 'absolute';
+					div.style.width = this.width + "px";
+					div.style.height = this.height + "px";
+					div.style.backgroundColor = this.color
+					// 生成小方块在地图上
+					map.appendChild(div)
+					this.render(map)
+				}
+				// 产生随机数位置
+				FoodBall.prototype.render = function(map) {
+					console.log(map)
+					// 随机产生横纵坐标
+					var x = rdom.getRandom(0, map.offsetWidth / this.width)* this.width;
+					var y = rdom.getRandom(0, map.offsetHeight / this.height) * this.height;
+					console.log(x, y)
+					this.x = x
+					this.y = y
+					var div = this.element
+					div.style.left = this.x + "px";
+					div.style.top = this.y + "px";
+				}
+				
+				var FoodBall = new FoodBall('red', 20, 20)
+				FoodBall.init(map)
+			})(window)
+		</script>
+	</body>
+</html>
