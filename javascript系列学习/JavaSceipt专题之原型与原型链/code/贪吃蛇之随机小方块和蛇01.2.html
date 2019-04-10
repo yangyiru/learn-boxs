@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>贪吃蛇之随机小方块01</title>
+		<style type="text/css">
+			.map{
+				position: relative;
+				width: 600px;
+				height: 600px;
+				background: #CCCCCC;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="map"></div>
+		<script type="text/javascript">
+			// 随机数的生成
+			(function() {
+				function Randm() {}
+				Randm.prototype.getRandm = function(min, max) {
+					return Math.floor(Math.random() * (max - min) + min)
+				}
+				window.Randm = Randm
+			})();
+			var getRam = new Randm();
+			// 获取地图
+			var map = document.querySelector('.map');
+			// 小方块对象
+			(function() {
+				var setElemnts = []
+				//  小方块的构造函数
+				function FoodBall(options) {
+					options = options || {}
+					this.width = options.width || 20;
+					this.height = options.height || 20;
+					this.color = options.color || "green";
+					this.element = document.createElement('div');
+					this.x = 0;
+					this.y = 0
+				}
+				// 初始化配置
+				FoodBall.prototype.init = function(map) {
+				  remove()
+				  var div = this.element;
+				  div.style.position = "absolute";
+				  div.style.width = this.width + "px";
+				  div.style.height = this.height + "px";
+				  div.style.backgroundColor = this.color;
+				  setElemnts.push(div)
+				  map.appendChild(div)
+				  this.render(map)
+				}
+				// render
+				FoodBall.prototype.render = function(map) {
+					this.x =  getRam.getRandm(0, map.offsetWidth / this.width) * this.width;
+					this.y =  getRam.getRandm(0, map.offsetHeight / this.height) * this.height;
+					this.element.style.top = this.x + "px";
+					this.element.style.left = this.y + "px";
+				}
+				// 删除小方块
+				function remove() {
+				  for (i = setElemnts.length - 1; i>=0 ; i--) {
+					// 删除div
+					setElemnts[i].parentNode.removeChild[setElemnts[i]]
+					// 删除这个数组的项
+					setElemnts.splice(i, 1)
+				  }
+				}
+				var options = {
+					width: 20,
+					height: 20,
+					color: "red"
+				}
+				window.FoodBall = FoodBall
+			})();
+			
+			
+			// snake对象
+			(function() {
+				function Snake(options) {
+					options = options || {}
+					// 蛇节的参数
+					this.width = options.width || 20
+					this.height = options.height || 20;
+					this.direct = options.direct || 'right'
+					// 蛇身+头
+					this.body = [
+						{x: 3, y: 2, color: "darkred"}, // 头
+						{x: 2, y: 2, color: "green"},
+						{x: 1, y: 2, color: "green"}
+					]
+				}
+				Snake.prototype.init = function(map) {
+					// 创建snake并渲染到地图
+					for (var i = 0, length = this.body.length; i < length; i++) {
+						var div = document.createElement('div')
+						var obj = this.body[i]
+						div.style.position = 'absolute'
+						div.style.width = this.width + "px"
+						div.style.height = this.height + "px"
+						div.style.left = obj.x * this.width + "px"
+						div.style.top = obj.y * this.height + "px";
+						console.log(obj.color)
+						div.style.backgroundColor = obj.color;
+						map.appendChild(div)
+					}
+				}
+				// 蛇移动
+				Snake.prototype.move = function() {
+					// 控制当前蛇节移动到上一个蛇节的位置
+					for (var i = this.body.length - 1; i >= 0; i--) {
+						this.body[i].x = this.body[i - 1].x
+						this.body[i].y = this.body[i - 1].y
+					}
+					// 控制蛇头
+					var head = this.body[0]
+					// 判断移动方向
+					switch(this.direct) {
+						case "right": 
+							head.x += 1;
+							break;
+						case "left":
+							head.x -= 1;
+							break;
+						case "top":
+							head.y -= 1;
+							break;
+						case "bottom":
+							head.y += 1;
+							break;
+					}
+					
+				}
+				var options = {
+					width: 20,
+					height: 20,
+					direct: 'right'
+				}
+				window.Snake = Snake
+			})();
+		
+			// game对象
+			(function() {
+				function Game(map) {
+					this.foodBall = new FoodBall()
+					this.snake = new Snake()
+					this.map = map
+				}
+				Game.prototype.start = function() {
+					// 把蛇和食物渲染
+					this.foodBall.init(this.map)
+					this.snake.move()
+					this.snake.init(this.map)
+					
+					// 游戏的逻辑
+				}
+				window.Game = Game
+			})()
+			var game = new Game(map)
+			game.start()
+		</script>
+	</body>
+</html>

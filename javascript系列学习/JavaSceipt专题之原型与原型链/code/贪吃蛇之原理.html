@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>贪吃蛇之随机小方块01</title>
+		<style type="text/css">
+			.map{
+				position: relative;
+				width: 600px;
+				height: 600px;
+				background: #CCCCCC;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="map"></div>
+		<script type="text/javascript">
+			// 原型添加方法
+			// 私有方法  别人不能访问只能自己使用
+			// bind方法 及原理
+			
+			// 食物对象/蛇对象/游戏对象
+			// 食物对象有宽/高/位置/颜色
+			var element = [];
+			(function(){
+				function FoodBall(width, height, color){
+					this.x = 0
+					this.y = 0
+					this.width = width
+					this.height = height
+					this.color = color
+				}
+				// 初始化前先删除food
+				move()
+				// food需在地图上显示,需传入map
+				FoodBall.prototype.init = function(map) {
+					var div = document.createElement('div')					
+					div.style.width = this.width + "px"
+					div.style.height = this.height + "px"
+					div.style.backgroundColor = this.color
+					this.x = parseInt(Math.floor(Math.random() * map.offsetWidth / this.width) * this.width)
+					this.y = parseInt(Math.floor(Math.random() * map.offsetHeight / this.height) * this.height)
+					div.style.left = this.x + "px"
+					div.style.top = this.y + "px"
+					div.style.position = "absolute"
+					map.appendChild(div)
+					element.push(div)
+				}
+				
+				// 移除食物 私有方法
+				function move() {
+					for (var i = 0; i < element.length; i++) {
+						// 删除div
+						element[i].parentNode.removeChild(element[i])
+						// 
+					}
+				}
+				// 把构造函数暴露给window
+				window.food = FoodBall
+			}());
+			var map = document.querySelector('.map')
+			var ood = new food(20, 20, "red")
+			ood.init(map)
+		</script>
+	</body>
+</html>
