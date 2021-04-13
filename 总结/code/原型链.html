@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>原型链类</title>
+</head>
+<body>
+	<script type="text/javascript">
+		// 字面量创建对象
+		var o1 = { name: '01'};
+		var o2 = new Object({ name: '02'}) 
+		// 通过构造函数
+		var M = function(name) {this.name = name}
+		var o3 = new M('03')
+		// 通过object.create
+		var p = {
+			name: 'p'
+		}
+		var o4 = Object.create(p)
+
+		console.log('o1:', o1)
+		console.log('o2:', o2)
+		console.log('o3:', o3)
+		console.log('o4:', o4)
+	</script>
+	
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>三栏布局：左右宽度固定，中间自适应</title>
+	<style type="text/css">
+		section{
+			padding: 0;
+			margin: 0;
+		}
+		section > div{
+			/*height: 300px;*/
+		}
+	</style>
+</head>
+<body>
+	<section>
+		<h3>方案一：float</h3>
+		<style type="text/css">
+			.float-left, .float-right{
+				float: left;
+				width: 300px;
+				background: #ccc;
+			}
+			.float-center{
+				margin-left: 300px;
+				margin-right: 300px;
+				background: #cccccc47
+			}
+			.float-right{
+				float: right;
+				background: #ccc;
+			}
+		</style>
+		<section class="float-wtapper">
+			<div class="float-left"></div>			
+			<div class="float-right"></div>
+			<div class="float-center">
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+			</div>
+		</section>
+	</section>
+	<section>
+		<h2>方案二：position</h2>
+		<style type="text/css">
+			.position-wtapper{
+				position: relative;
+				/*height: 300px;*/
+			}
+			.position-left{
+				width: 300px;
+				position: absolute;
+				left: 0;
+				top: 0;
+				background: #ccc;
+			}
+			.position-right{
+				width: 300px;
+				position: absolute;
+				right: 0;
+				top: 0;
+				background: #ccc;
+			}
+			.position-center{
+				margin-left: 300px;
+				margin-right: 300px;
+				background: #cccccc47
+			}
+		</style>
+		<section class="position-wtapper">
+			<div class="position-left"></div>
+			<div class="position-right"></div>
+			<div class="position-center">
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+			</div>
+		</section>
+	</section>
+	<section>
+		<h2>方案三： table-cell</h2>
+		<style type="text/css">
+			.table-wtapper{
+				width: 100%;
+				/*height: 300px;*/
+				display: table;
+			}
+			.table-wtapper div{
+				display: table-cell;
+			}
+			.table-left, .table-right{
+				width: 300px;
+				background: #ccc
+			}
+		</style>
+		<section class="table-wtapper">
+			<div class="table-left"></div>			
+			<div class="table-center">
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+			</div>
+			<div class="table-right"></div>
+		</section>
+	</section>
+	<section>
+		<h2>方案四：flex布局</h2>
+		<style type="text/css">
+			.flex-wtapper{
+				/*height: 300px;*/
+				display: flex;
+				align-content: center;
+				justify-content: space-between;
+			}
+			.flex-left, .flex-right{
+				width: 300px;
+				background: #ccc;
+			}
+			.flex-center{
+				flex: 1;
+			}
+		</style>
+		<section class="flex-wtapper">
+			<div class="flex-left"></div>
+			<div class="flex-center">
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+			</div>
+			<div class="flex-right"></div>			
+		</section>
+	</section>
+	<section>
+		<h2>方案五：grid布局</h2>
+		<style type="text/css">
+			.grid-wtapper{				
+				width: 100%;
+				/*height: 300px;*/
+				display: grid;
+				grid-template-columns: 300px auto 300px;
+			}
+			.grid-left, .grid-right{
+				width: 300px;
+				background: #ccc;
+			}
+		</style>
+		<section class="grid-wtapper">
+			<div class="grid-left"></div>
+			<div class="grid-center">
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+				<p>增加高度</p>
+			</div>
+			<div class="grid-right"></div>			
+		</section>
+	</section>
+	<code>
+		总结：
+		float布局：是现在用的比较多的布局比较多的门户网站目前在使用，兼容性比较。值得注意的是使用这类方式需要清除浮动(脱离文档流)；<br/>
+
+		position布局：快捷，因为布局已脱离文档流，会影响后续元素<br/>
+
+		table布局：使用起来较为方便，兼容性不错，但不利于搜索引擎抓取<br/>
+
+		flex布局：比较完美的一种解决方案，兼容性有一定局限性<br/>
+
+		grid布局：兼容性不太好，代码量简化很多，可做很多
+	</code>
+	<p>注意取掉条件：高度已知，以上哪种方案能支撑</p>
+</body>
+</html>

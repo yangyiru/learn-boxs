@@ -357,3 +357,390 @@ vue的初始化逻辑写的非常清晰，把不同的功能逻辑拆分成单�
 
 在初始化的最后，检测到如果有**el**属性，则调用**vm.$mount(vm.$options.el)**方法挂载vm,挂载的目标就是把模板渲染成最终的DOM
 
+#### Vue实例挂载的实现
+
+Vue中我们是通过$mout实例方法去挂载vm的，$mount的方法在多个文件中都有定义，**src/platforms/web/entry-runtime-with-compiler.js**、**src/platforms/web//runtime/index.js**、**src/platforms/weex/runtime/index.js**。因为$monut这个方法的实现是和平台、构建方式都有关联性。重点需要分析compiler版本的$mount的实现，因为抛来webpack的vue-loader，我们需要在纯前端浏览器中分析Vue的工作原理，这样有助于我们深入理解原理实现。
+
+compiler版本的$mount实现很有意思，文件路径：**src/platform/web/entry-runtime-with-compiler.js**
+
+```js
+const mount = Vue.prototype.$mount
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  el = el && query(el)
+
+  /* istanbul ignore if */
+  if (el === document.body || el === document.documentElement) {
+    process.env.NODE_ENV !== 'production' && warn(
+      `Do not mount Vue to <html> or <body> - mount to normal elements instead.`
+    )
+    return this
+  }
+
+  const options = this.$options
+  // resolve template/el and convert to render function
+  if (!options.render) {
+    let template = options.template
+    if (template) {
+      if (typeof template === 'string') {
+        if (template.charAt(0) === '#') {
+          template = idToTemplate(template)
+          /* istanbul ignore if */
+          if (process.env.NODE_ENV !== 'production' && !template) {
+            warn(
+              `Template element not found or is empty: ${options.template}`,
+              this
+            )
+          }
+        }
+      } else if (template.nodeType) {
+        template = template.innerHTML
+      } else {
+        if (process.env.NODE_ENV !== 'production') {
+          warn('invalid template option:' + template, this)
+        }
+        return this
+      }
+    } else if (el) {
+      template = getOuterHTML(el)
+    }
+    if (template) {
+      /* istanbul ignore if */
+      if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+        mark('compile')
+      }
+
+      const { render, staticRenderFns } = compileToFunctions(template, {
+        outputSourceRange: process.env.NODE_ENV !== 'production',
+        shouldDecodeNewlines,
+        shouldDecodeNewlinesForHref,
+        delimiters: options.delimiters,
+        comments: options.comments
+      }, this)
+      options.render = render
+      options.staticRenderFns = staticRenderFns
+
+      /* istanbul ignore if */
+      if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+        mark('compile end')
+        measure(`vue ${this._name} compile`, 'compile', 'compile end')
+      }
+    }
+  }
+  return mount.call(this, el, hydrating)
+}
+```
+
+这段代码首先缓存了原型上的$mount方法，再重新定义该方法，首先，它对el做了限制，Vue不能挂载到body、html这样的根节点上。接下的就是核心点 ——如果没有定义render方法，则会把el或者 template字符串转为render方法，这里我们需要牢记，**在Vue2.0版本中，所有的Vue组件渲染最终都需要`render`方法，无论我们是用单文件vue方式开发组件还是写`el`或者`template`属性，最终都会转换为`render`方法，**那么这个过程是Vue的一个‘“在线编译”的过程’，她是通过调用**`compileToFunctions`**方法实现的，其具体编译过程可参考编译模块，最后，调用**`原先原型上的$mount方法`**进行挂载。
+
+**`原先原型上的$mount方法`**：文件路径为 **src/platform/web/runtime/index.js**, 单独放的原因是为了被复用，因为 `runtime only`版本的Vue也可被使用。
+
+```js
+// public mount method
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  el = el && inBrowser ? query(el) : undefined
+  return mountComponent(this, el, hydrating)
+}
+```
+
+`$mount`方法支持传入2个参数，第一个是`el`,它表示挂载的元素，可以是字符串也可是DOM对象，如果是字符串在浏览器环境下调用`query`方法转换为DOM对象的，第二参数是和服务端渲染有关，在浏览器环境下我们不需要传第二个参数。
+
+`$mount` 方法世界上回去调用`mountComponent` 方法，这个方法定义在 **src/core/instance/lifecycle.js**文件中：
+
+```js
+export function mountComponent (
+  vm: Component,
+  el: ?Element,
+  hydrating?: boolean
+): Component {
+  vm.$el = el
+  if (!vm.$options.render) {
+    vm.$options.render = createEmptyVNode
+    if (process.env.NODE_ENV !== 'production') {
+      /* istanbul ignore if */
+      if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
+        vm.$options.el || el) {
+        warn(
+          'You are using the runtime-only build of Vue where the template ' +
+          'compiler is not available. Either pre-compile the templates into ' +
+          'render functions, or use the compiler-included build.',
+          vm
+        )
+      } else {
+        warn(
+          'Failed to mount component: template or render function not defined.',
+          vm
+        )
+      }
+    }
+  }
+  callHook(vm, 'beforeMount')
+
+  let updateComponent
+  /* istanbul ignore if */
+  if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    updateComponent = () => {
+      const name = vm._name
+      const id = vm._uid
+      const startTag = `vue-perf-start:${id}`
+      const endTag = `vue-perf-end:${id}`
+
+      mark(startTag)
+      const vnode = vm._render()
+      mark(endTag)
+      measure(`vue ${name} render`, startTag, endTag)
+
+      mark(startTag)
+      vm._update(vnode, hydrating)
+      mark(endTag)
+      measure(`vue ${name} patch`, startTag, endTag)
+    }
+  } else {
+    updateComponent = () => {
+      vm._update(vm._render(), hydrating)
+    }
+  }
+
+  // we set this to vm._watcher inside the watcher's constructor
+  // since the watcher's initial patch may call $forceUpdate (e.g. inside child
+  // component's mounted hook), which relies on vm._watcher being already defined
+  new Watcher(vm, updateComponent, noop, {
+    before () {
+      if (vm._isMounted && !vm._isDestroyed) {
+        callHook(vm, 'beforeUpdate')
+      }
+    }
+  }, true /* isRenderWatcher */)
+  hydrating = false
+
+  // manually mounted instance, call mounted on self
+  // mounted is called for render-created child components in its inserted hook
+  if (vm.$vnode == null) {
+    vm._isMounted = true
+    callHook(vm, 'mounted')
+  }
+  return vm
+}
+```
+
+从上面的代码可以看到，`mountComponent`核心实现调用vm.render方法先生成虚拟Node，再实例化一个渲染`Watcher`,在它的回调函数中会调用`updateComponent` ,最终调用`vm._update` 更新DOM.
+
+`Watcher`在这里起到的作用有两点，一个是初始化的时候会执行回调函数，另一个是当vm实例中的监测数据发生变化时执行回调函数，这个会在后面的章节中介绍。
+
+函数最后判断为根节点的时候设置`vm._isMounted = true`,表示这个实例已经挂载了，同时执行 `mounted`钩子函数。这里注意`vm.$vnode`表示Vue实例的父虚拟Node,所以它为Null时则表示当前是根Vue实例。
+
+##### 总结
+
+**mountComponent**方法的逻辑非常清晰，它会完成整个渲染工作，接下核心点为`vm._render`和vm_update
+
+#### render
+
+Vue的`render`方法是实例的一个私有方法，它用来把实例渲染成一个虚拟Node。它的定义在`src/core/render.js`文件中：
+
+```js
+Vue.prototype._render = function (): VNode {
+    const vm: Component = this
+    const { render, _parentVnode } = vm.$options
+
+    if (_parentVnode) {
+      vm.$scopedSlots = normalizeScopedSlots(
+        _parentVnode.data.scopedSlots,
+        vm.$slots,
+        vm.$scopedSlots
+      )
+    }
+
+    // set parent vnode. this allows render functions to have access
+    // to the data on the placeholder node.
+    vm.$vnode = _parentVnode
+    // render self
+    let vnode
+    try {
+      // There's no need to maintain a stack because all render fns are called
+      // separately from one another. Nested component's render fns are called
+      // when parent component is patched.
+      currentRenderingInstance = vm
+      vnode = render.call(vm._renderProxy, vm.$createElement)
+    } catch (e) {
+      handleError(e, vm, `render`)
+      // return error render result,
+      // or previous vnode to prevent render error causing blank component
+      /* istanbul ignore else */
+      if (process.env.NODE_ENV !== 'production' && vm.$options.renderError) {
+        try {
+          vnode = vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)
+        } catch (e) {
+          handleError(e, vm, `renderError`)
+          vnode = vm._vnode
+        }
+      } else {
+        vnode = vm._vnode
+      }
+    } finally {
+      currentRenderingInstance = null
+    }
+    // if the returned array contains only a single node, allow it
+    if (Array.isArray(vnode) && vnode.length === 1) {
+      vnode = vnode[0]
+    }
+    // return empty vnode in case the render function errored out
+    if (!(vnode instanceof VNode)) {
+      if (process.env.NODE_ENV !== 'production' && Array.isArray(vnode)) {
+        warn(
+          'Multiple root nodes returned from render function. Render function ' +
+          'should return a single root node.',
+          vm
+        )
+      }
+      vnode = createEmptyVNode()
+    }
+    // set parent
+    vnode.parent = _parentVnode
+    return vnode
+  }
+```
+
+这段代码的关键在于`render`方法的调用，我们在平时的开发工作中手写`render`方法的场景比较少，而写的比较多的是`template`模板，在之前的`mounted`方法的实现中，会把`template`编译成`render`方法，但这个编译过程是非常复杂的，需要在查看Vue编译过程细讲中好好说道。
+
+在Vue的官方文档中介绍了`render`函数的第一个参数是`createElement`,那么结合之前的栗子：
+
+```html
+<div id="app">
+    {{message}}
+</div>
+```
+
+相当于我们编写如下`render`函数:
+
+```js
+render: function(createElement) {
+    return createElement('div', {
+        attrs: {
+            id: 'app'
+        }
+    }, this.message)
+}
+```
+
+再回到_render函数的`render`方法的调用：
+
+```js
+vnode = render.call(vm._renderProxy, vm.$createElement)
+```
+
+可以看到，`render`函数中`creanteElement`方法就是`vm.$createElement`
+
+```js
+export function initRender (vm: Component) {
+    ....
+    // bind the createElement fn to this instance
+  // so that we get proper render context inside it.
+  // args order: tag, data, children, normalizationType, alwaysNormalize
+  // internal version is used by render functions compiled from templates
+  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+  // normalization is always applied for the public version, used in
+  // user-written render functions.
+  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
+}
+```
+
+实际上，`vm.$createElement `方法定义是在执行`initRender`方法的时候，可以看到还有一个`vm._c`方法，它是被模板编译成render函数使用，而在`vm.createElement `是用户手写render方法使用的，这俩个方法支持的参数相同，并且内部都调用了`createElement`方法。
+
+##### render总结
+
+`vm.render`最终是通过执行`createElement`方法并返回的是`vnode`,它是一个虚拟Node。vue2.0相比Vue1.0最大的功能升级就是利用了Virtual DOM，而要分析`createElement`的实现前，我们要先了解Virtual DOM的概念。
+
+#### Virtual DOM
+
+Virtual DOM 产生的前提是浏览器的DOM是很”昂贵“的，为了更直观的感受，我们可以简单的把一个简单的div元素打印出，如图所示：
+
+![image-20210405145341373](E:\Alice yang\files\学习记录\learn-boxs\vue系列\demo\Images\image-20210405145341373.png)
+
+可以看到，真正的DOM元素是非常庞大的，因为浏览器的标准就把DOM设计的非常复杂。当我们频繁的去做DOM更新，就会产生一定的性能问题。
+
+而Virtual DOM 就是用一个原生对象去描述一个DOM节点，所以它比创建一个DOM的代价要小很多。在Vue.js中，Virtual DOM是用`VNode`这么一个Class去描述，它定义在`src/core/vdom/vnode.js`
+
+```js
+export default class VNode {
+  tag: string | void;
+  data: VNodeData | void;
+  children: ?Array<VNode>;
+  text: string | void;
+  elm: Node | void;
+  ns: string | void;
+  context: Component | void; // rendered in this component's scope
+  key: string | number | void;
+  componentOptions: VNodeComponentOptions | void;
+  componentInstance: Component | void; // component instance
+  parent: VNode | void; // component placeholder node
+
+  // strictly internal
+  raw: boolean; // contains raw HTML? (server only)
+  isStatic: boolean; // hoisted static node
+  isRootInsert: boolean; // necessary for enter transition check
+  isComment: boolean; // empty comment placeholder?
+  isCloned: boolean; // is a cloned node?
+  isOnce: boolean; // is a v-once node?
+  asyncFactory: Function | void; // async component factory function
+  asyncMeta: Object | void;
+  isAsyncPlaceholder: boolean;
+  ssrContext: Object | void;
+  fnContext: Component | void; // real context vm for functional nodes
+  fnOptions: ?ComponentOptions; // for SSR caching
+  devtoolsMeta: ?Object; // used to store functional render context for devtools
+  fnScopeId: ?string; // functional scope id support
+
+  constructor (
+    tag?: string,
+    data?: VNodeData,
+    children?: ?Array<VNode>,
+    text?: string,
+    elm?: Node,
+    context?: Component,
+    componentOptions?: VNodeComponentOptions,
+    asyncFactory?: Function
+  ) {
+    this.tag = tag
+    this.data = data
+    this.children = children
+    this.text = text
+    this.elm = elm
+    this.ns = undefined
+    this.context = context
+    this.fnContext = undefined
+    this.fnOptions = undefined
+    this.fnScopeId = undefined
+    this.key = data && data.key
+    this.componentOptions = componentOptions
+    this.componentInstance = undefined
+    this.parent = undefined
+    this.raw = false
+    this.isStatic = false
+    this.isRootInsert = true
+    this.isComment = false
+    this.isCloned = false
+    this.isOnce = false
+    this.asyncFactory = asyncFactory
+    this.asyncMeta = undefined
+    this.isAsyncPlaceholder = false
+  }
+
+  // DEPRECATED: alias for componentInstance for backwards compat.
+  /* istanbul ignore next */
+  get child (): Component | void {
+    return this.componentInstance
+  }
+}
+```
+
+可以看到Vue.js中的Virtual DOM的定义还是略微复杂一些，因为它这里包含了很多Vue.js的特性。但是切记不可以被这么茫茫多的属性吓到，实际上Vue.js中的Virtual DOM是借鉴了一个开源库的[snabbdom](https://github.com/snabbdom/snabbdom) 的实现，然后加入了Vue.js特色的东西。可以先查看这个库的源码，因为要纯粹和简单，可以帮助理解
+
+##### Virtual DOM总结
+
+其实VNode是对真实Dom的一种抽象描述，它的核心定义无非就是几个关键属性、标签名、数据、子节点、键值等，其他属性都是用来扩展VNode的灵活性以及实现一些特殊feature的。由于VNode除了它的数据结构的定义，映射到真实的DOM实际要经历VNode的create、diff、path等过程。那么在Vue.js中，VNode的create是通过之前提到的`createElement`方法创建的
+

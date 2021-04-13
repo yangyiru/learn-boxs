@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>三栏布局：上下高度固定，中间适应</title>
+	<style type="text/css">
+		html *{
+			padding: 0;
+			margin: 0;
+		}
+		html, body { width: 100%; height: 100%; }
+	</style>
+</head>
+<body>
+	<section>
+		<h2>方案一：position布局</h2>
+		<style type="text/css">
+			.layout-wrapper{
+				width: 100%;
+				height: 100%;
+				position: relative;
+			}
+			.layout-wrapper > div{
+				width: 100%;
+				position: absolute;
+				background-color: #000
+			}
+			.layout-header{
+				top: 0;
+				height: 100px;
+			}
+			.layout-conter{
+				width: 100%;
+				top: 300px;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: #ccc;
+			}
+			.layout-footer{
+				bottom: 0;       
+				height: 100px; 
+			}
+
+		</style>
+		<section class="layout-wrapper">
+			<div class="layout-header"></div>
+			<div class="layout-conter"></div>
+			<div class="layout-footer"></div>
+		</section>
+	</section>
+</body>
+</html>

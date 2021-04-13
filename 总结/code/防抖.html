@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>防抖和节流</title>
+</head>
+<body>
+    <script>
+
+        // 防抖： 一段时间会等待，所有的带着一起做了，
+        function debound(fn, time) {
+            var timeId = null;
+            return function() {
+                const context = this;
+                if (timeId) {
+                    window.clearTimeout(timeId)
+                }
+                timeId = setTimeout(() => {
+                    fn.apply(context, arguments);
+                    timeId = null
+                }, time);
+            }
+        }
+        const debounded = debound(() => {console.log('Hi')}, 10);
+        debounded()
+        debounded()
+
+        // 节流: 一段时间执行一次之后，就不会再执行第二次
+        function throttly(fn, time) {
+            let canUse = true
+            return function() {
+                if (canUse) {
+                    fn.apply(this, arguments);
+                    canUse = false;
+                    setTimeout(() => {
+                        canUse = true
+                    }, time);
+                }
+            }
+        }
+        const throttlyed = throttly(() => console.log('he'), 200);
+        throttlyed()
+        throttlyed();
+
+
+        // 默写防抖与节流函数
+        //  第一步解释什么是防抖、节流
+        // 防抖： 一段时间等待所有要执行的，整合到一起执行，不单独执行
+        function debounde2(fn, time) {
+            var timeId = null;
+            return function() {
+                const context = this;
+                if (timeId) {
+                    window.clearTimeout(timeId)
+                }
+                timeId = setTimeout(() => {
+                    fn.apply(context, arguments);
+                    timeId = null
+                }, time);
+            }
+        }
+        const debounded2 = debounde2(() => {console.log('我是测试防抖的')}, 20);
+        debounded2()
+        debounded2()
+        debounded2()
+
+        // 节流： 一段时间内执行了一次后，不会再执行第二次
+        function throttly2(fn, time) {
+            let canUse = true;
+            return function() {
+                if (canUse) {
+                    fn.apply(this, arguments);
+                    canUse = false;
+                    setTimeout(() => {
+                       canUse = true 
+                    }, time);
+                }
+            }
+        } 
+        const throttlyed2 = throttly2(() => {console.log('我是测试节流的')}, 200);
+        throttlyed2();
+        throttlyed2()
+    </script>
+</body>
+</html>

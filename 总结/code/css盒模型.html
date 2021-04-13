@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>css 盒模型</title>
+	<style type="text/css">
+		html *{
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+	<style type="text/css">
+			#sec {
+				background-color: #f00;
+			}
+			.child{
+				height: 100px;
+				margin-top: 10px;
+				background: yellow;
+			}
+		</style>
+	<section id="sec">		
+		<article class="child"></article>
+	</section>
+	<p>BFC原理以及使用场景</p>
+	<!-- BFC 垂直方向边距重叠 边距重叠取最大值-->
+	<section id="margin">
+		<style type="text/css">
+			#margin{
+				background: pink;
+				overflow: hidden;
+			}
+			#margin > p{
+				margin: 5px  0 25px;
+				background: red;
+			}
+		</style>
+		<p>1</p>
+		<div style="overflow: hidden;">
+			<p>2</p>
+		</div>
+		<p>3</p>
+	</section>
+	<!-- BFC 不与float重叠 -->
+	<section id="layout">
+		<style type="text/css">
+			#layout{
+				background: red;
+				overflow: hidden;
+			}
+			#layout .left{
+				float: left;
+				width: 100px;
+				height: 100px;
+				background: pink;
+			}
+			#layout .right{
+				height: 110px;
+				background: #ccc;
+				overflow: auto;
+			}
+		</style>
+		<div class="left"></div>
+		<div class="right"></div>
+		<div class="clear"></div>
+	</section>
+
+	<!-- BFC 不与float重叠 -->
+	<!-- BFC子元素即使是float也会参与高度计算 -->
+	<section id="float">
+		<style type="text/css">
+			#float{
+				background: red;
+				overflow: auto;
+			}
+			#float .float{
+				float: left;
+				font-size: 30px;
+				/*background: yellow;*/
+			}
+		</style>
+		<div class="float">我是浮动元素</div>
+	</section>
+</body>
+</html>

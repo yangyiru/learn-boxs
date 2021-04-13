@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>vue数据劫持Object.defineProperty</title>
+</head>
+<body>
+	<script type="text/javascript">
+		let car = {}
+		let val = 4000
+		Object.defineProperty(car, 'price', {
+			enumerable: true,
+			configurable: true,
+			get() {
+				console.log('读取price属性了');
+				return val
+			},
+			set(newVal) {
+				console.log('price属性被修改了');
+				val = newVal;
+			}
+		})
+		car.price = 222;
+		
+	</script>
+</body>
+</html>

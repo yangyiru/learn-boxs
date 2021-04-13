@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写AJAX</title>
+</head>
+<body>
+    <script>
+        // 完整版本
+        var requset = new XMLHttpRequest(); // 兼容写法 new ActiveXObject()
+        requset.open('GET', '/a/b?name=12354', true);
+        requset.onreadystatechange = function() {
+            // 监听readystate状态
+            // requset.readyState === 4 是否已经接收所有响应
+            if (requset.readyState === 4 && requset.status === 200) {
+                console.log(requset.responseText)
+            }
+        }
+        requset.send()
+    </script>
+</body>
+</html>
