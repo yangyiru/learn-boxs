@@ -82,6 +82,45 @@
         const throttlyed2 = throttly2(() => {console.log('我是测试节流的')}, 200);
         throttlyed2();
         throttlyed2()
+
+
+        // 节流：一段时间内执行了一次后，第二次不再执行
+        function throttle3(fn, time) {
+            let canUse = true;
+            return function() {
+                if (canUse) {
+                    fn.apply(this, arguments)
+                    canUse = false
+                    setTimeout(() => {
+                       canUse = true 
+                    }, time);
+                }
+            }
+        }
+        const throttleId3 = throttle3(() => {console.log('我默写的节流3')}, 300)
+        throttleId3()
+        throttleId3()
+        throttleId3()
+
+        function throttle4(fn, time) {
+            let isCanUse = true;
+            return function() {
+                if (isCanUse) {
+                    isCanUse = false;
+                    fn.apply(this, arguments)
+                    setTimeout(() => {
+                        isCanUse = true
+                    }, time)
+                }
+            }
+        }
+        const throttleID4 = throttle4(() => { console.log('我是默写节流4----') }, 200)
+        throttleID4()
+        throttleID4()
+
+
+        // 防抖：所有要执行的代码在到了一段时间后统一执行
+        
     </script>
 </body>
 </html>
